@@ -28,25 +28,10 @@
  and ensuring functions respond to random inputs. Thus, the test cases act as
  testable specifications (specifically working well with design-by-contract methodology.)
 
- Examples:
- type TLEClaim = class(TClaim<Integer>)
-   function Predicate(value): Boolean; override;
- end;
+ The idea is a different than JSCheck.
 
- function LE(a: Integer; b: Integer): Boolean;
- begin
-    Result := a <= b;
- end;
-
- function TLEClaim.Predicate(value): Boolean;
- begin
-   Result := Self.Verdict(LE(value)); // this looks wrong
- end;
-
- runner := TClaimRunner.Create;
- claim := TLEClaim.Create('Less than', [GenInteger(10), GenInteger(20)])
- runner.Add(claim);
- runner.Check();
+ You have specifiers similar to JSCheck. To run a test, you would make a builder (with a Predicate and
+ a Classifier then add it to a Suite. The suite builds objects for you.)
 }
 
 unit PickCheck;
@@ -62,25 +47,6 @@ uses
   cthreads, Classes, SysUtils, StrUtils, Generics.Collections;
 
 const
-  Primes: array of Integer = (
-    2, 3, 5, 7, 11, 13, 17, 19, 23, 29,
-    31, 37, 41, 43, 47, 53, 59, 61, 67, 71,
-    73, 79, 83, 89, 97, 101, 103, 107, 109, 113,
-    127, 131, 137, 139, 149, 151, 157, 163, 167, 173,
-    179, 181, 191, 193, 197, 199, 211, 223, 227, 229,
-    233, 239, 241, 251, 257, 263, 269, 271, 277, 281,
-    283, 293, 307, 311, 313, 317, 331, 337, 347, 349,
-    353, 359, 367, 373, 379, 383, 389, 397, 401, 409,
-    419, 421, 431, 433, 439, 443, 449, 457, 461, 463,
-    467, 479, 487, 491, 499, 503, 509, 521, 523, 541,
-    547, 557, 563, 569, 571, 577, 587, 593, 599, 601,
-    607, 613, 617, 619, 631, 641, 643, 647, 653, 659,
-    661, 673, 677, 683, 691, 701, 709, 719, 727, 733,
-    739, 743, 751, 757, 761, 769, 773, 787, 797, 809,
-    811, 821, 823, 827, 829, 839, 853, 857, 859, 863,
-    877, 881, 883, 887, 907, 911, 919, 929, 937, 941,
-    947, 953, 967, 971, 977, 983, 991, 997);
-
   // {name}: {class}{cases} cases tested, {pass} pass{fail}{lost}\n
   TestFormatString = '%s: %s %n cases tested, %n pass %n %s\n';
 
@@ -90,81 +56,259 @@ type
   generic TCheckFunc<T> = reference to function: T;
   generic TMakeObjectFunc<T> = reference to function: T;
   TRandomFunc = function(value: LongInt): LongInt;
-  generic TPredicateFunc<T> = function(value: T): Boolean; // unlike JSCheck, this is passed into an internal function.
+  generic TPredicateFunc<T> = function(value: array of T): Boolean; // unlike JSCheck, this is passed into an internal function.
   generic TSignatures<T> = array of specialize TCheckFunc<T>;
 
-  TCheckCase = class
+  TCheckPropertyOptions = class
   private
     fNumberOfTrials: Integer;
     fRandomFunc: TRandomFunc;
+    fSeed: LongInt;
     procedure SetNumTrials(value: Integer);
     procedure SetRandomFunc(func: TRandomFunc);
   public
-    property NumberOfTrials: Integer read fNumberOfTrials write SetNumTrials;
+    constructor Create;
+    property NumberOfTrials: Integer read fNumberOfTrials write SetNumTrials default 100;
     property RandomFunc: TRandomFunc read fRandomFunc write SetRandomFunc;
+    property Seed: LongInt read fSeed write fSeed;
   end;
 
-  generic TClaim<T> = class
+
+  generic TCheckPropertyValues<T> = array of T;
+
+  generic TCheckProperty<T> = class
+    fSerial: TGuid;
+    fValues: specialize TCheckPropertyValues<T>;
+    fClassification: String;
+    fVerdict: Boolean;
+  public
+    property Serial: TGuid read fSerial write fSerial;
+    property Values: specialize TCheckPropertyValues<T> read fValues write fValues;
+    property Classification: String read fClassification write fClassification;
+    property Verdict: Boolean read fVerdict write fVerdict;
+  end;
+
+  generic TCheckProperties<T> = array of specialize TCheckProperty<T>;
+
+  generic TCheckPropertyBuilder<T> = class
   private
     fName: String;
-    fSignatures: array of specialize TSignatures<T>;
-  protected
-    procedure Verdict(outcome: Boolean);
+    fSignatures: specialize TSignatures<T>;
   public
     function Predicate(values: array of T): Boolean; virtual;
-    property Name: String read fName;
+    function Classify(values: array of T): String; virtual;
+    procedure Build(var built: specialize TCheckProperty<T>);
+    property Signatures: specialize TSignatures<T> read fSignatures write fSignatures;
+    property Name: String read fName write fName;
   end;
 
-  generic TCheckRunner<T> = class
+  generic TPropertyRunnerCallback<T> = reference to procedure(checkProperty: specialize TCheckPropertyBuilder<T>);
+
+  generic TCheckPropertyReport<T> = class
   private
-    fAllClaims: array of specialize TClaim<T>;
-    fConfig: TCheckCase;
+    fName: String;
+    fFails: specialize TCheckProperties<T>;
+    fPasses: specialize TCheckProperties<T>;
   public
-    constructor Create(config: TCheckCase);
-    destructor Destroy; override;
-    procedure AddClaim(claim: specialize TClaim<T>);
-    procedure Check;
-//    generic procedure Register<T>(Serial: Integer; Value: T);
-    procedure Claim(name: String; predicate: specialize TPredicateFunc<T>; signature: specialize TSignatures<T>; classifier: String = '');
+    constructor Create;
+    // TODO: start to use TLists, because saying array of specialize ... in a property falls apart
+    procedure AddFail(fail: specialize TCheckProperty<T>);
+    function AllFails: specialize TCheckProperties<T>;
+    procedure AddPass(pass: specialize TCheckProperty<T>);
+    function AllPasses: specialize TCheckProperties<T>;
+    property Name: String read fName write fName;
   end;
 
+  generic TCheckPropertyReports<T> = array of specialize TCheckPropertyReport<T>;
+
+  generic TCheckPropertyBuilderSuite<T> = class
+  private
+    fProperties: array of specialize TCheckPropertyBuilder<T>;
+    fPropCount: Integer;
+    fConfig: TCheckPropertyOptions;
+    fReport: specialize TCheckPropertyReports<T>;
+    fOnFail: specialize TPropertyRunnerCallback<T>;
+    fOnLost: specialize TPropertyRunnerCallback<T>;
+    fOnPass: specialize TPropertyRunnerCallback<T>;
+    fOnReport: specialize TPropertyRunnerCallback<T>;
+    fOnResult: specialize TPropertyRunnerCallback<T>;
+  public
+    constructor Create;
+    constructor Create(config: TCheckPropertyOptions);
+    destructor Destroy; override;
+    procedure AddProperty(prop: specialize TCheckPropertyBuilder<T>);
+    procedure Check;
+
+    property Report: specialize TCheckPropertyReports<T> read fReport;
+    property OnFail: specialize TPropertyRunnerCallback<T> write fOnFail;
+    property OnLost: specialize TPropertyRunnerCallback<T> write fOnLost;
+    property OnPass: specialize TPropertyRunnerCallback<T> write fOnPass;
+    property OnReport: specialize TPropertyRunnerCallback<T> write fOnReport;
+    property OnResult: specialize TPropertyRunnerCallback<T> write fOnResult;
+  end;
+
+  generic function MakeACheckPropertyReport<T>: specialize TCheckPropertyReport<T>;
 
 implementation
 
-{ TClaim }
-procedure TClaim.Verdict(outcome: Boolean); begin end;
-function TClaim.Predicate(values: array of T): Boolean; begin end;b
+{ TCheckPropertyBuilder }
 
-{ TCheckCase }
-procedure TCheckCase.SetNumTrials(value: Integer);
-begin end;
-procedure TCheckCase.SetRandomFunc(func: TRandomFunc);
-begin end;
-
-{ TCheckRunner }
-constructor TCheckRunner.Create(config: TCheckCase);
+function TCheckPropertyBuilder.Predicate(values: array of T): Boolean;
 begin
-  fConfig := config;
+  Result := True;
 end;
 
-destructor TCheckRunner.Destroy;
+function TCheckPropertyBuilder.Classify(values: array of T): String;
+begin
+  Result := '(not classified)';
+end;
+
+procedure TCheckPropertyBuilder.Build(var built: specialize TCheckProperty<T>);
+var
+  sigArgs: array of T;
+  i: Integer;
+begin
+  with built do
+  begin
+    SetLength(sigArgs, Length(fSignatures));
+      // Make random values from the signature.
+    for i := low(fSignatures) to high(fSignatures) do
+    begin
+      sigArgs[i] := fSignatures[i]();
+    end;
+
+    // Set all the random values to the checkProperty values
+    Values := sigArgs;
+
+    // Get the verdict by passing in the values.
+    Verdict := Predicate(Values);
+
+    // Classify the signature data and store it in the object.
+    Classification := Classify(sigArgs);
+
+  // Make a serial
+    Serial := TGuid.NewGuid;
+  end;
+end;
+
+{ TCheckPropertyBuilderOptions }
+constructor TCheckPropertyOptions.Create;
+begin
+end;
+
+procedure TCheckPropertyOptions.SetNumTrials(value: Integer);
+begin
+  fNumberOfTrials := value;
+end;
+
+procedure TCheckPropertyOptions.SetRandomFunc(func: TRandomFunc);
+begin
+
+end;
+
+{ TCheckPropertyBuilderSuite }
+
+constructor TCheckPropertyBuilderSuite.Create;
+begin
+  fConfig := TCheckPropertyOptions.Create;
+  SetLength(fProperties, 255);
+  fPropCount := 0;
+end;
+
+constructor TCheckPropertyBuilderSuite.Create(config: TCheckPropertyOptions);
+begin
+  fConfig := config;
+  SetLength(fProperties, 255);
+  fPropCount := 0;
+
+end;
+
+destructor TCheckPropertyBuilderSuite.Destroy;
 begin
   fConfig.Free;
 end;
 
-procedure TCheckRunner.AddClaim(claim: specialize TClaim<T>);
+procedure TCheckPropertyBuilderSuite.AddProperty(prop: specialize TCheckPropertyBuilder<T>);
 begin
+  fProperties[fPropCount] := prop;
+  Inc(fPropCount);
+  WriteLn('added: ', fPropCount, fProperties[fPropCount - 1].Name);
+//  WriteLn('count: ', Length)
 end;
 
-procedure TCheckRunner.Check;
+generic function MakeACheckPropertyReport<T>: specialize TCheckPropertyReport<T>;
 begin
-
+  Result := specialize TCheckPropertyReport<T>.Create;
 end;
 
-procedure TCheckRunner.Claim(name: String; predicate: specialize TPredicateFunc<T>; signature: specialize TSignatures<T>; classifier: String = '');
+procedure TCheckPropertyBuilderSuite.Check;
+var
+  i, j: Integer;
+  built: specialize TCheckProperty<T>;
+  trials: Integer;
 begin
+  WriteLn('t: ');
+  WriteLn('t: ', Length(fProperties));
+  WriteLn('ready: ', Length(fProperties), fProperties[fPropCount - 1].Name);
+  SetLength(fReport, fPropCount);
+
+  trials := fConfig.NumberOfTrials;
+
+  for i := 0 to fPropCount - 1 do
+  begin
+    WriteLn('what is i: ', i);
+    fReport[i] := specialize MakeACheckPropertyReport<T>;
+//    fReport[i].Name := fProperties[i].Name;
+    writeln('making!!!! here', fProperties[i].Name);
+        WriteLn('OK 1', fReport[0].Name);
+        WriteLn('OK 2');
+        writeln(fConfig.NumberOfTrials);
+    for j := 1 to trials do
+    begin
+      WriteLn('Next loop');
+      WriteLn('test ', j);
+      built := specialize TCheckProperty<T>.Create;
+      fProperties[i].Build(built);
+      writeln('doing verdict');
+      if built.Verdict then
+      begin
+        writeln('pass');
+        fReport[i].AddPass(built);
+      end else begin
+        writeln('fail');
+        fReport[i].AddFail(built);
+      end;
+    end;
+  end;
 end;
 
+{ TCheckPropertyReport }
+constructor TCheckPropertyReport.Create;
+begin
+  SetLength(fFails, 1);
+  SetLength(fPasses, 1);
+end;
 
+procedure TCheckPropertyReport.AddFail(fail: specialize TCheckProperty<T>);
+begin
+  SetLength(fFails, Length(fFails) + 1);
+  fFails[Length(fFails) - 1] := fail;
+end;
 
-End.
+function TCheckPropertyReport.AllFails: specialize TCheckProperties<T>;
+begin
+    Result := fFails;
+end;
+
+procedure TCheckPropertyReport.AddPass(pass: specialize TCheckProperty<T>);
+begin
+  SetLength(fPasses, Length(fFails) + 1);
+  fPasses[Length(fPasses) - 1] := pass;
+end;
+
+function TCheckPropertyReport.AllPasses: specialize TCheckProperties<T>;
+begin
+  Result := fPasses;
+end;
+
+end.
