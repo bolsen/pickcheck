@@ -28,12 +28,13 @@ type
 //    procedure ForAllSetup(signatures: specialize TSignatures<T>; predicateFunc: specialize TPredicateFunc<T>);
     function WithConfig(options: TCheckPropertyOptions): PropertyChecker;
     function WithNumberOfTrials(count: Integer): PropertyChecker;
-    function WithSeed(seed: longint): PropertyChecker;
+    function WithSeed(seed: longint): PropertyChecker; // TODO: This is non-functioning.
     function Check: specialize TCheckPropertyBuilderSuite<T>;
   end;
 
 
 generic function MakeAPropCheckeBuilder<T>(predicateFunc: specialize TPredicateFunc<T>): specialize TPropertyCheckerBuilder<T>;
+generic function MakeASuite<T>(options: TCheckPropertyOptions): specialize TCheckPropertyBuilderSuite<T>;
 
 implementation
 
@@ -67,6 +68,7 @@ constructor PropertyChecker.ForAll(signatures: specialize TSignatures<T>; predic
 begin
   fBuilder := specialize MakeAPropCheckeBuilder<T>(predicateFunc);
   fBuilder.Signatures := signatures;
+  fBuilder.Name := 'PropertyChecker';
   fOptions := TCheckPropertyOptions.Create;
 end;
 
@@ -88,14 +90,16 @@ begin
   Result := Self;
 end;
 
+generic function MakeASuite<T>(options: TCheckPropertyOptions): specialize TCheckPropertyBuilderSuite<T>;
+begin
+  Result := specialize TCheckPropertyBuilderSuite<T>.Create(options);
+end;
+
 function PropertyChecker.Check: specialize TCheckPropertyBuilderSuite<T>;
 begin
-  with Result do
-  begin
-    Create(fOptions);
-    AddProperty(fBuilder);
-    Check;
-  end;
+  Result := specialize MakeASuite<T>(fOptions);
+  Result.AddProperty(fBuilder);
+  Result.Check;
 end;
 
 end.
