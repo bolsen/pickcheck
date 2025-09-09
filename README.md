@@ -25,6 +25,12 @@ There is a package file for Lazarus also.
 Start with some simple examples.
 
 ```
+var
+  suite: specialize TCheckPropertySuite<Integer>;
+  reporter: specialize TCheckPropertyConsoleReporter<Integer>;
+
+...
+
 try
   runner := specialize PropertyChecker<Integer>.
     ForAll([specialize GenNumber<Integer>(1,1000), specialize GenNumber<Integer>(1,1000)],
@@ -32,7 +38,13 @@ try
              begin
                Result := value[0] > value[1];
              end).
+    WithName('Test for greater-than').
+    WithNumberofTrials(100)
     Check;
+
+    reporter := specialize TCheckPropertyConsoleReporter<Integer>.Create(runner.Report[0], runner.Options);
+    reporter.DoReport;
+
 finally
     runner.Free;
 end;
@@ -43,10 +55,22 @@ The `Check` function returns a `TCheckPropertySuite` object, which you can then 
 In the example, we want to check two numbers and find any case where the first value is not the same as the second value. It will be quick to see that with random data, it will falsify the statement. This is an output of the run:
 
 ```
+Test for greater-than: Falsification after 1 tests.
+Failing input was :
+638
+994
+```
+
+If all checks pass:
+
+```
+Test for greater-than: All tests passed!
 
 ```
 
-With real software, we want to aim for 100% un-falsifiability. What is nice is that random data can serve towards heuristic testing, where repeated runs will produce diminishing returns in finding bugs.
+With real software, we want to aim for 100% un-falsifiability if we can.  What is nice is that random data can serve towards heuristic testing, where repeated runs will produce diminishing returns in finding bugs.
+
+You can see more examples in `pickcheck.examples.pas`.
 
 A more complex example:
 
@@ -57,7 +81,7 @@ type
     age: String;
    end;
 
-function MakePerson: specialize TCheckFunc<TPerson>;
+function MakePerson: specialize TSpecifierGeneratorFunc<TPerson>;
 begin
     Result := function()
     begin
