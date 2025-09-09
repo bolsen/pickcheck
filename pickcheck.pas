@@ -46,18 +46,17 @@ interface
 uses
   cthreads, Classes, SysUtils, StrUtils, Generics.Collections;
 
-const
   // {name}: {class}{cases} cases tested, {pass} pass{fail}{lost}\n
   TestFormatString = '%s: %s %n cases tested, %n pass %n %s\n';
 
 type
   EPickCheckError = class(Exception) end;
 
-  generic TCheckFunc<T> = reference to function: T;
+  generic TSpecifierGeneratorFunc<T> = reference to function: T;
   generic TMakeObjectFunc<T> = reference to function: T;
   TRandomFunc = function(value: LongInt): LongInt;
   generic TPredicateFunc<T> = function(value: array of T): Boolean; // unlike JSCheck, this is passed into an internal function.
-  generic TSignatures<T> = array of specialize TCheckFunc<T>;
+  generic TSignatures<T> = array of specialize TSpecifierGeneratorFunc<T>;
   generic TCheckPropertyValues<T> = array of T;
 
   TCheckPropertyOptions = class;

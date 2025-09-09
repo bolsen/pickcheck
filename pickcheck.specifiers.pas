@@ -34,20 +34,20 @@ const
 generic function Resolve<T>(value: T; rest: array of T): T;
 
 { These functions generate random values. }
-generic function GenLiteral<T>(Value: T): specialize TCheckFunc<T>;
-generic function GenBool<Boolean>(bias: Double): specialize TCheckFunc<Boolean>;
-generic function GenNumber<Integer>(fromNum: Integer = 1; toNum: Integer = 0): specialize TCheckFunc<Integer>;
-generic function GenOneOf<T>(values: array of T): specialize TCheckFunc<T>;
-generic function GenOneOf<T>(values: array of T; weights: array of Double): specialize TCheckFunc<T>;
-generic function GenSequence<T>(values: array of T): specialize TCheckFunc<T>;
-generic function GenInteger<Integer>: specialize TCheckFunc<Integer>;
-generic function GenInteger<Integer>(I: Integer; J: Integer): specialize TCheckFunc<Integer>;
-// generic function GenCharacter<Char>: specialize TCheckFunc<Char>;
-generic function GenCharacter<Char>(i: String): specialize TCheckFunc<Char>;
-// generic function GenArray<T>(First: array of T; fillValue: T): specialize TCheckFunc<array<T>>;
-generic function GenString<T>(parameters: array of String): specialize TCheckFunc<String>;
-generic function GenAny<T>(): specialize TCheckFunc<T>;
-generic function GenObject<T>(makeObjectFunc: specialize TMakeObjectFunc<T>): specialize TCheckFunc<T>;
+generic function GenLiteral<T>(Value: T): specialize TSpecifierGeneratorFunc<T>;
+generic function GenBool<Boolean>(bias: Double): specialize TSpecifierGeneratorFunc<Boolean>;
+generic function GenNumber<Integer>(fromNum: Integer = 1; toNum: Integer = 0): specialize TSpecifierGeneratorFunc<Integer>;
+generic function GenOneOf<T>(values: array of T): specialize TSpecifierGeneratorFunc<T>;
+generic function GenOneOf<T>(values: array of T; weights: array of Double): specialize TSpecifierGeneratorFunc<T>;
+generic function GenSequence<T>(values: array of T): specialize TSpecifierGeneratorFunc<T>;
+generic function GenInteger<Integer>: specialize TSpecifierGeneratorFunc<Integer>;
+generic function GenInteger<Integer>(I: Integer; J: Integer): specialize TSpecifierGeneratorFunc<Integer>;
+// generic function GenCharacter<Char>: specialize TSpecifierGeneratorFunc<Char>;
+generic function GenCharacter<Char>(i: String): specialize TSpecifierGeneratorFunc<Char>;
+// generic function GenArray<T>(First: array of T; fillValue: T): specialize TSpecifierGeneratorFunc<array<T>>;
+generic function GenString<T>(parameters: array of String): specialize TSpecifierGeneratorFunc<String>;
+generic function GenAny<T>(): specialize TSpecifierGeneratorFunc<T>;
+generic function GenObject<T>(makeObjectFunc: specialize TMakeObjectFunc<T>): specialize TSpecifierGeneratorFunc<T>;
 
 implementation
 
@@ -56,7 +56,7 @@ begin
   Result := value;
 end;
 
-generic function GenLiteral<T>(value: T): specialize TCheckFunc<T>;
+generic function GenLiteral<T>(value: T): specialize TSpecifierGeneratorFunc<T>;
 begin
   Result := function: T
     begin
@@ -64,7 +64,7 @@ begin
     end;
 end;
 
-generic function GenBool<Boolean>(bias: Double): specialize TCheckFunc<Boolean>;
+generic function GenBool<Boolean>(bias: Double): specialize TSpecifierGeneratorFunc<Boolean>;
 begin
 //  bias := specialize Resolve<Double>(bias, []);
   Result := function(): Boolean
@@ -73,7 +73,7 @@ begin
   end;
 end;
 
-generic function GenNumber<Integer>(fromNum: Integer = 1; toNum: Integer = 0): specialize TCheckFunc<Integer>;
+generic function GenNumber<Integer>(fromNum: Integer = 1; toNum: Integer = 0): specialize TSpecifierGeneratorFunc<Integer>;
 var
   temp: Integer;
   difference: Integer;
@@ -92,7 +92,7 @@ begin
     end;
 end;
 
-generic function GenOneOf<T>(values: array of T): specialize TCheckFunc<T>;
+generic function GenOneOf<T>(values: array of T): specialize TSpecifierGeneratorFunc<T>;
 begin
   Result := function: T
   var
@@ -111,7 +111,7 @@ begin
   end;
 end;
 
-generic function GenOneOf<T>(values: array of T; weights: array of Double): specialize TCheckFunc<T>;
+generic function GenOneOf<T>(values: array of T; weights: array of Double): specialize TSpecifierGeneratorFunc<T>;
 var
   I: Integer;
   totalWeight: Double = 0.0;
@@ -166,16 +166,16 @@ begin
   end;
 end;
 
-generic function GenSequence<T>(values: array of T): specialize TCheckFunc<T>;
+generic function GenSequence<T>(values: array of T): specialize TSpecifierGeneratorFunc<T>;
 begin
 end;
 
-generic function GenInteger<Integer>: specialize TCheckFunc<Integer>;
+generic function GenInteger<Integer>: specialize TSpecifierGeneratorFunc<Integer>;
 begin
   Result := specialize GenOneOf<Integer>(primes);
 end;
 
-generic function GenInteger<Integer>(I: Integer; J: Integer): specialize TCheckFunc<Integer>;
+generic function GenInteger<Integer>(I: Integer; J: Integer): specialize TSpecifierGeneratorFunc<Integer>;
 var
   temp: Integer;
 begin
@@ -191,29 +191,29 @@ begin
     end;
 end;
 
-// generic function GenCharacter<Char>(): specialize TCheckFunc<Char>;
+// generic function GenCharacter<Char>(): specialize TSpecifierGeneratorFunc<Char>;
 // begin
 //   Result := specialize GenCharacter<Char>(Chr(32), Chr(126));
 // end;
 
-generic function GenCharacter<Char>(i: String): specialize TCheckFunc<Char>;
+generic function GenCharacter<Char>(i: String): specialize TSpecifierGeneratorFunc<Char>;
 begin
 //  Result := specialize GenOneOf<Char>(SplitString(i, ''));
 end;
 
-//generic function GenArray<T>(First: array of T; fillValue: T): specialize TCheckFunc<array of T>;
+//generic function GenArray<T>(First: array of T; fillValue: T): specialize TSpecifierGeneratorFunc<array of T>;
 //begin
 //end;
 
-generic function GenString<T>(parameters: array of String): specialize TCheckFunc<String>;
+generic function GenString<T>(parameters: array of String): specialize TSpecifierGeneratorFunc<String>;
 begin
 end;
 
-generic function GenAny<T>(): specialize TCheckFunc<T>;
+generic function GenAny<T>(): specialize TSpecifierGeneratorFunc<T>;
 begin
 end;
 
-generic function GenObject<T>(makeObjectFunc: specialize TMakeObjectFunc<T>): specialize TCheckFunc<T>;
+generic function GenObject<T>(makeObjectFunc: specialize TMakeObjectFunc<T>): specialize TSpecifierGeneratorFunc<T>;
 begin
 end;
 
