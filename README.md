@@ -38,7 +38,7 @@ finally
 end;
 ```
 
-The `Check` function returns a `TCheckPropertyBuilderSuite` object, which you can then use to inspect the output.
+The `Check` function returns a `TCheckPropertySuite` object, which you can then use to inspect the output.
 
 In the example, we want to check two numbers and find any case where the first value is not the same as the second value. It will be quick to see that with random data, it will falsify the statement. This is an output of the run:
 
@@ -87,7 +87,7 @@ end;
 # Verbose interface
 
 The `PropertyChecker` just spins up all of the things to check one property, outputing
-a special sub-class of `TCheckPropertyBuilderSuite`. This class can support more
+a special sub-class of `TCheckPropertySuite`. This class can support more
 properties as a suite and more customization, but the `PropertyChecker` should suffice
 for most cases and ideally in the future, do everything.
 

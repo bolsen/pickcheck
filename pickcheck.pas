@@ -121,7 +121,7 @@ type
 
   generic TCheckPropertyReports<T> = array of specialize TCheckPropertyReport<T>;
 
-  generic TCheckPropertyBuilderSuite<T> = class
+  generic TCheckPropertySuite<T> = class
   private
     fProperties: array of specialize TCheckPropertyBuilder<T>;
     fPropCount: Integer;
@@ -216,16 +216,16 @@ begin
 
 end;
 
-{ TCheckPropertyBuilderSuite }
+{ TCheckPropertySuite }
 
-constructor TCheckPropertyBuilderSuite.Create;
+constructor TCheckPropertySuite.Create;
 begin
   fConfig := TCheckPropertyOptions.Create;
   SetLength(fProperties, 255);
   fPropCount := 0;
 end;
 
-constructor TCheckPropertyBuilderSuite.Create(config: TCheckPropertyOptions);
+constructor TCheckPropertySuite.Create(config: TCheckPropertyOptions);
 begin
   fConfig := config;
   SetLength(fProperties, 255);
@@ -233,7 +233,7 @@ begin
 
 end;
 
-destructor TCheckPropertyBuilderSuite.Destroy;
+destructor TCheckPropertySuite.Destroy;
 var
   I: Integer;
 begin
@@ -249,7 +249,7 @@ begin
   end;
 end;
 
-procedure TCheckPropertyBuilderSuite.AddProperty(prop: specialize TCheckPropertyBuilder<T>);
+procedure TCheckPropertySuite.AddProperty(prop: specialize TCheckPropertyBuilder<T>);
 begin
   fProperties[fPropCount] := prop;
   Inc(fPropCount);
@@ -260,7 +260,7 @@ begin
   Result := specialize TCheckPropertyReport<T>.Create;
 end;
 
-procedure TCheckPropertyBuilderSuite.Check;
+procedure TCheckPropertySuite.Check;
 var
   i, j: Integer;
   built: specialize TCheckProperty<T>;

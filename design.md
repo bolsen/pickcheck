@@ -1,6 +1,6 @@
 # Design
 
-1. `TCheckPropertyBuilderSuite` has
+1. `TCheckPropertySuite` has
  - A list of properties array of `TCheckPropertyBuilder`
  - A configuration:  `TCheckPropertyOptions`
  - And a list of reports for each property ran: array of `TCheckPropertyReport`.
@@ -24,7 +24,7 @@
  - It contains a result, called a `Verdict`.
 
 4. `TCheckPropertyOptions`
- - When creating a `TCheckPropertyBuilderSuite`, you give it or it will create an object
+ - When creating a `TCheckPropertySuite`, you give it or it will create an object
    of this type.
  - It stores a Name, NumberOfTrials for a suite, the Random Seed, if it should StopOnFirstFail.
  - This is passed to a reporter object and also drives the checker.

@@ -39,12 +39,12 @@ end;
 
 procedure RunExample;
 var
-  a: specialize TCheckPropertyBuilderSuite<Integer>;
+  a: specialize TCheckPropertySuite<Integer>;
   builder: TMyCheckPropertyBuilder;
   prop: specialize TCheckProperty<Integer>;
-  suite: specialize TCheckPropertyBuilderSuite<Integer>;
+  suite: specialize TCheckPropertySuite<Integer>;
 begin
-  a := specialize TCheckPropertyBuilderSuite<Integer>.Create;
+  a := specialize TCheckPropertySuite<Integer>.Create;
   builder := TMyCheckPropertyBuilder.Create;
   builder.Name := 'This tests an array';
   builder.Signatures := [specialize GenNumber<Integer>(1, 2000), specialize GenNumber<Integer>(1, 2000)];
@@ -64,7 +64,7 @@ end;
 
 procedure RunPropertyExample;
 var
-  suite: specialize TCheckPropertyBuilderSuite<Integer>;
+  suite: specialize TCheckPropertySuite<Integer>;
   reporter: specialize TCheckPropertyConsoleReporter<Integer>;
 begin
   try

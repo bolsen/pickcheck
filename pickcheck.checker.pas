@@ -31,12 +31,12 @@ type
     function WithNumberOfTrials(count: Integer): PropertyChecker;
     function WithSeed(seed: longint): PropertyChecker; // TODO: This is non-functioning.
     function StopOnFail(value: Boolean): PropertyChecker;
-    function Check: specialize TCheckPropertyBuilderSuite<T>;
+    function Check: specialize TCheckPropertySuite<T>;
   end;
 
 
 generic function MakeAPropCheckeBuilder<T>(predicateFunc: specialize TPredicateFunc<T>): specialize TPropertyCheckerBuilder<T>;
-generic function MakeASuite<T>(options: TCheckPropertyOptions): specialize TCheckPropertyBuilderSuite<T>;
+generic function MakeASuite<T>(options: TCheckPropertyOptions): specialize TCheckPropertySuite<T>;
 
 implementation
 
@@ -104,12 +104,12 @@ begin
   Result := Self;
 end;
 
-generic function MakeASuite<T>(options: TCheckPropertyOptions): specialize TCheckPropertyBuilderSuite<T>;
+generic function MakeASuite<T>(options: TCheckPropertyOptions): specialize TCheckPropertySuite<T>;
 begin
-  Result := specialize TCheckPropertyBuilderSuite<T>.Create(options);
+  Result := specialize TCheckPropertySuite<T>.Create(options);
 end;
 
-function PropertyChecker.Check: specialize TCheckPropertyBuilderSuite<T>;
+function PropertyChecker.Check: specialize TCheckPropertySuite<T>;
 begin
   Result := specialize MakeASuite<T>(fOptions);
   Result.AddProperty(fBuilder);
