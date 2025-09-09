@@ -87,15 +87,16 @@ type
   generic TCheckPropertyReport<T> = class
   private
     fName: String;
-    fFails: specialize TCheckProperties<T>;
-    fPasses: specialize TCheckProperties<T>;
+    fFails: specialize TObjectList<specialize TCheckProperty<T>>;
+    fPasses: specialize TObjectList<specialize TCheckProperty<T>>;
   public
     constructor Create;
+    destructor Destroy; override;
     // TODO: start to use TLists, because saying array of specialize ... in a property falls apart
     procedure AddFail(fail: specialize TCheckProperty<T>);
-    function AllFails: specialize TCheckProperties<T>;
+    function AllFails: specialize TObjectList<specialize TCheckProperty<T>>;
     procedure AddPass(pass: specialize TCheckProperty<T>);
-    function AllPasses: specialize TCheckProperties<T>;
+    function AllPasses: specialize TObjectList<specialize TCheckProperty<T>>;
     property Name: String read fName write fName;
   end;
 
@@ -153,6 +154,7 @@ type
   end;
 
   generic function MakeACheckPropertyReport<T>: specialize TCheckPropertyReport<T>;
+  generic function MakeObjectListOfProps<T>: specialize TObjectList<specialize TCheckProperty<T>>;
 
 implementation
 
@@ -288,31 +290,40 @@ begin
   end;
 end;
 
+generic function MakeObjectListOfProps<T>: specialize TObjectList<specialize TCheckProperty<T>>;
+begin
+  Result :=  specialize TObjectList<specialize TCheckProperty<T>>.Create;
+end;
+
 { TCheckPropertyReport }
 constructor TCheckPropertyReport.Create;
 begin
-  SetLength(fFails, 1);
-  SetLength(fPasses, 1);
+  fFails := specialize MakeObjectListOfProps<T>;
+  fPasses := specialize MakeObjectListOfProps<T>;
+end;
+
+destructor TCheckPropertyReport.Destroy;
+begin
+  fPasses.Free;
+  fFails.Free;
 end;
 
 procedure TCheckPropertyReport.AddFail(fail: specialize TCheckProperty<T>);
 begin
-  SetLength(fFails, Length(fFails) + 1);
-  fFails[Length(fFails) - 1] := fail;
+  fFails.Add(fail);
 end;
 
-function TCheckPropertyReport.AllFails: specialize TCheckProperties<T>;
+function TCheckPropertyReport.AllFails: specialize TObjectList<specialize TCheckProperty<T>>;
 begin
     Result := fFails;
 end;
 
 procedure TCheckPropertyReport.AddPass(pass: specialize TCheckProperty<T>);
 begin
-  SetLength(fPasses, Length(fFails) + 1);
-  fPasses[Length(fPasses) - 1] := pass;
+  fPasses.Add(pass);
 end;
 
-function TCheckPropertyReport.AllPasses: specialize TCheckProperties<T>;
+function TCheckPropertyReport.AllPasses: specialize TObjectList<specialize TCheckProperty<T>>;
 begin
   Result := fPasses;
 end;
@@ -332,17 +343,31 @@ end;
 
 { TCheckPropertyReporter }
 procedure TCheckPropertyConsoleReporter.DoReport;
+var
+  i : Integer;
+  failingReport: specialize TCheckProperty<T>;
 begin
-  if fOptions.StopOnFirstFail then
+  if fReport.AllPasses.Count = fOptions.NumberOfTrials then
   begin
-    WriteLn(Format('Falsification after %d tests on %s.',
+    WriteLn(fOptions.Name, ': All tests passed!');
+  end else if fOptions.StopOnFirstFail then
+  begin
+    WriteLn(Format('%s: Falsification after %d tests.',
                    [
-                     Length(fReport.AllFails) + Length(fReport.AllPasses),
-                     fOptions.Name]));
+                     fOptions.Name,
+                     fReport.AllFails.Count + fReport.AllPasses.Count
+                   ]));
+    failingReport := fReport.AllFails.Last;
+    WriteLn('Failing input was : ');
+    for i := low(failingReport.Values) to high(failingReport.Values) do
+    begin
+      WriteLn(failingReport.Values[i]);
+    end;
+    WriteLn('');
   end else begin
     WriteLn('For ', fReport.Name);
-    WriteLn('Pass: ', Length(fReport.AllPasses));
-    WriteLn('Fail: ', Length(fReport.AllFails));
+    WriteLn('Pass: ', fReport.AllPasses.Count);
+    WriteLn('Fail: ', fReport.AllFails.Count);
   end;
 
 end;
