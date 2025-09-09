@@ -10,6 +10,16 @@ There is a light and verbose interface. The verbose interface is the actual impl
 
 The heaviest bit here is whether generics are actually needed. The type you are declaring for the generic classes is the primary input type (but values can be wrapped in composite types.) The predicates center around testing the validity of the inputs.
 
+# Compile
+
+Since this is using a lot of new features, FP 3.3.1 is needed.
+
+There is nothing special at the moment to do other than to run the test:
+
+`fpc tests.lpr && ./tests`
+
+There is a package file for Lazarus also.
+
 # Example
 
 Start with some simple examples.
