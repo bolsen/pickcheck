@@ -18,6 +18,10 @@
         <Filename Value="pickcheck.specifiers.pas"/>
         <UnitName Value="PickCheck.Specifiers"/>
       </Item>
+      <Item>
+        <Filename Value="pickcheck.checker.pas"/>
+        <UnitName Value="PickCheck.Checker"/>
+      </Item>
     </Files>
     <RequiredPkgs>
       <Item>
