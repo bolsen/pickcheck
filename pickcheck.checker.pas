@@ -25,10 +25,12 @@ type
     fBuilder: specialize TPropertyCheckerBuilder<T>;
     public
     constructor ForAll(signatures: specialize TSignatures<T>; predicateFunc: specialize TPredicateFunc<T>);
-//    procedure ForAllSetup(signatures: specialize TSignatures<T>; predicateFunc: specialize TPredicateFunc<T>);
+    //    procedure ForAllSetup(signatures: specialize TSignatures<T>; predicateFunc: specialize TPredicateFunc<T>);
+    function WithName(name: String): PropertyChecker;
     function WithConfig(options: TCheckPropertyOptions): PropertyChecker;
     function WithNumberOfTrials(count: Integer): PropertyChecker;
     function WithSeed(seed: longint): PropertyChecker; // TODO: This is non-functioning.
+    function StopOnFail(value: Boolean): PropertyChecker;
     function Check: specialize TCheckPropertyBuilderSuite<T>;
   end;
 
@@ -78,6 +80,12 @@ begin
   Result := Self;
 end;
 
+function PropertyChecker.WithName(name: String): PropertyChecker;
+begin
+  fOptions.Name := name;
+  Result := Self;
+end;
+
 function PropertyChecker.WithNumberOfTrials(count: Integer): PropertyChecker;
 begin
   fOptions.NumberOfTrials := count;
@@ -87,6 +95,12 @@ end;
 function PropertyChecker.WithSeed(seed: longint): PropertyChecker;
 begin
   fOptions.Seed := seed;
+  Result := Self;
+end;
+
+function PropertyChecker.StopOnFail(value: Boolean): PropertyChecker;
+begin
+  fOptions.StopOnFirstFail := value;
   Result := Self;
 end;
 

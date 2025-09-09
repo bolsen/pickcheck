@@ -58,23 +58,9 @@ type
   TRandomFunc = function(value: LongInt): LongInt;
   generic TPredicateFunc<T> = function(value: array of T): Boolean; // unlike JSCheck, this is passed into an internal function.
   generic TSignatures<T> = array of specialize TCheckFunc<T>;
-
-  TCheckPropertyOptions = class
-  private
-    fNumberOfTrials: Integer;
-    fRandomFunc: TRandomFunc;
-    fSeed: LongInt;
-    procedure SetNumTrials(value: Integer);
-    procedure SetRandomFunc(func: TRandomFunc);
-  public
-    constructor Create;
-    property NumberOfTrials: Integer read fNumberOfTrials write SetNumTrials default 100;
-    property RandomFunc: TRandomFunc read fRandomFunc write SetRandomFunc;
-    property Seed: LongInt read fSeed write fSeed;
-  end;
-
-
   generic TCheckPropertyValues<T> = array of T;
+
+  TCheckPropertyOptions = class;
 
   generic TCheckProperty<T> = class
     fSerial: TGuid;
@@ -102,8 +88,6 @@ type
     property Name: String read fName write fName;
   end;
 
-  generic TPropertyRunnerCallback<T> = reference to procedure(checkProperty: specialize TCheckPropertyBuilder<T>);
-
   generic TCheckPropertyReport<T> = class
   private
     fName: String;
@@ -119,6 +103,22 @@ type
     property Name: String read fName write fName;
   end;
 
+  generic TCheckPropertyReporter<T> = class
+  protected
+    fReport: specialize TCheckPropertyReport<T>;
+    fOptions: TCheckPropertyOptions;
+  public
+    constructor Create(report: specialize TCheckPropertyReport<T>; options: TCheckPropertyOptions);
+    procedure DoReport; virtual;
+    property Report: specialize TCheckPropertyReport<T> read fReport write fReport;
+  end;
+
+  generic TCheckPropertyConsoleReporter<T> = class(specialize TCheckPropertyReporter<T>)
+  public
+    procedure DoReport; override;
+  end;
+
+
   generic TCheckPropertyReports<T> = array of specialize TCheckPropertyReport<T>;
 
   generic TCheckPropertyBuilderSuite<T> = class
@@ -127,11 +127,6 @@ type
     fPropCount: Integer;
     fConfig: TCheckPropertyOptions;
     fReport: specialize TCheckPropertyReports<T>;
-    fOnFail: specialize TPropertyRunnerCallback<T>;
-    fOnLost: specialize TPropertyRunnerCallback<T>;
-    fOnPass: specialize TPropertyRunnerCallback<T>;
-    fOnReport: specialize TPropertyRunnerCallback<T>;
-    fOnResult: specialize TPropertyRunnerCallback<T>;
   public
     constructor Create;
     constructor Create(config: TCheckPropertyOptions);
@@ -140,11 +135,25 @@ type
     procedure Check;
 
     property Report: specialize TCheckPropertyReports<T> read fReport;
-    property OnFail: specialize TPropertyRunnerCallback<T> write fOnFail;
-    property OnLost: specialize TPropertyRunnerCallback<T> write fOnLost;
-    property OnPass: specialize TPropertyRunnerCallback<T> write fOnPass;
-    property OnReport: specialize TPropertyRunnerCallback<T> write fOnReport;
-    property OnResult: specialize TPropertyRunnerCallback<T> write fOnResult;
+    property Options: TCheckPropertyOptions read fConfig write fConfig;
+  end;
+
+  TCheckPropertyOptions = class
+  private
+    fName: String;
+    fNumberOfTrials: Integer;
+    fRandomFunc: TRandomFunc;
+    fSeed: LongInt;
+    fStopOnFail: Boolean;
+    procedure SetNumTrials(value: Integer);
+    procedure SetRandomFunc(func: TRandomFunc);
+  public
+    constructor Create;
+    property Name: String read fName write fName;
+    property NumberOfTrials: Integer read fNumberOfTrials write SetNumTrials default 100;
+    property RandomFunc: TRandomFunc read fRandomFunc write SetRandomFunc;
+    property Seed: LongInt read fSeed write fSeed;
+    property StopOnFirstFail: Boolean read fStopOnFail write fStopOnFail;
   end;
 
   generic function MakeACheckPropertyReport<T>: specialize TCheckPropertyReport<T>;
@@ -194,6 +203,7 @@ end;
 { TCheckPropertyBuilderOptions }
 constructor TCheckPropertyOptions.Create;
 begin
+  fStopOnFail := true;
 end;
 
 procedure TCheckPropertyOptions.SetNumTrials(value: Integer);
@@ -224,16 +234,25 @@ begin
 end;
 
 destructor TCheckPropertyBuilderSuite.Destroy;
+var
+  I: Integer;
 begin
   fConfig.Free;
+  for i := low(fProperties) to high(fProperties) do
+  begin
+    if fProperties[i] <> Nil then fProperties[i].Free;
+  end;
+
+  for i := low(fReport) to high(fReport) do
+  begin
+    if fReport[i] <> Nil then fReport[i].Free;
+  end;
 end;
 
 procedure TCheckPropertyBuilderSuite.AddProperty(prop: specialize TCheckPropertyBuilder<T>);
 begin
   fProperties[fPropCount] := prop;
   Inc(fPropCount);
-  WriteLn('added: ', fPropCount, fProperties[fPropCount - 1].Name);
-//  WriteLn('count: ', Length)
 end;
 
 generic function MakeACheckPropertyReport<T>: specialize TCheckPropertyReport<T>;
@@ -247,36 +266,27 @@ var
   built: specialize TCheckProperty<T>;
   trials: Integer;
 begin
-  WriteLn('t: ');
-  WriteLn('t: ', Length(fProperties));
-  WriteLn('ready: ', Length(fProperties), fProperties[fPropCount - 1].Name);
   SetLength(fReport, fPropCount);
 
   trials := fConfig.NumberOfTrials;
 
   for i := 0 to fPropCount - 1 do
   begin
-    WriteLn('what is i: ', i);
     fReport[i] := specialize MakeACheckPropertyReport<T>;
-//    fReport[i].Name := fProperties[i].Name;
-    writeln('making!!!! here', fProperties[i].Name);
-        WriteLn('OK 1', fReport[0].Name);
-        WriteLn('OK 2');
-        writeln(fConfig.NumberOfTrials);
     for j := 1 to trials do
     begin
-      WriteLn('Next loop');
-      WriteLn('test ', j);
       built := specialize TCheckProperty<T>.Create;
       fProperties[i].Build(built);
-      writeln('doing verdict');
+
       if built.Verdict then
       begin
-        writeln('pass');
         fReport[i].AddPass(built);
       end else begin
-        writeln('fail');
         fReport[i].AddFail(built);
+        if fConfig.StopOnFirstFail then
+        begin
+          Exit;
+        end;
       end;
     end;
   end;
@@ -310,5 +320,36 @@ function TCheckPropertyReport.AllPasses: specialize TCheckProperties<T>;
 begin
   Result := fPasses;
 end;
+
+{ TCheckPropertyReporter }
+constructor TCheckPropertyReporter.Create(report: specialize TCheckPropertyReport<T>; options: TCheckPropertyOptions);
+begin
+  fReport := report;
+  fOptions := options;
+end;
+
+procedure TCheckPropertyReporter.DoReport;
+begin
+  WriteLn('(not implemented)');
+end;
+
+
+{ TCheckPropertyReporter }
+procedure TCheckPropertyConsoleReporter.DoReport;
+begin
+  if fOptions.StopOnFirstFail then
+  begin
+    WriteLn(Format('Falsification after %d tests on %s.',
+                   [
+                     Length(fReport.AllFails) + Length(fReport.AllPasses),
+                     fOptions.Name]));
+  end else begin
+    WriteLn('For ', fReport.Name);
+    WriteLn('Pass: ', Length(fReport.AllPasses));
+    WriteLn('Fail: ', Length(fReport.AllFails));
+  end;
+
+end;
+
 
 end.
