@@ -18,6 +18,7 @@ type
 
 procedure RunExample;
 procedure RunPropertyExample;
+procedure RunAnotherExample;
 
 implementation
 
@@ -88,6 +89,36 @@ begin
 
   //  a.AddProperty(builder);
 //  a.Check;
+end;
+
+
+procedure RunAnotherExample;
+var
+  suite: specialize TCheckPropertySuite<Integer>;
+  reporter: specialize TCheckPropertyConsoleReporter<Integer>;
+
+begin
+  try
+
+    suite := specialize PropertyChecker<Integer>.
+      ForAll([specialize GenNumber<Integer>(1,2000)],
+             function(value: array of Integer): Boolean
+               begin
+                 Result := value[0] <= 2000;
+               end).
+      WithName('Check specifier').
+      WithNumberOfTrials(100).
+      Check;
+
+    reporter := specialize TCheckPropertyConsoleReporter<Integer>.Create(suite.Report[0], suite.Options);
+    reporter.DoReport;
+
+
+  finally
+    suite.Free;
+    reporter.Free;
+  end;
+
 end;
 
 end.
