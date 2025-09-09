@@ -46,9 +46,6 @@ interface
 uses
   cthreads, Classes, SysUtils, StrUtils, Generics.Collections;
 
-  // {name}: {class}{cases} cases tested, {pass} pass{fail}{lost}\n
-  TestFormatString = '%s: %s %n cases tested, %n pass %n %s\n';
-
 type
   EPickCheckError = class(Exception) end;
 
