@@ -24,4 +24,5 @@ begin
 
 //  RunExample;
   RunPropertyExample;
+  RunAnotherExample;
 end.
