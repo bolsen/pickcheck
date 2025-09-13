@@ -15,6 +15,7 @@
 13. [ ] write more specifiers
 14. [ ] collect common types across units into one unit (e.g. specifiers can stand on its own, just needs to share type info. it can go into an .inc?)
 15. [ ] Make a GUI reporter (like TestInsight, integrate into Lazarus?)
-16. [ ] Put it in Delphi mode?
+16. [X] Put it in Delphi mode?
 17. [ ] handle asynchronous tests?
 18. [ ] Priority: Reporter should calculate statistics to make available in test suites
+19. [ ] IDEA: Create instrumentation to serialize data for testing. Like, publish out to some endpoint to continually test property cases from a live system

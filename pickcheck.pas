@@ -36,7 +36,7 @@
 
 unit PickCheck;
 
-{$mode objfpc}{$H+}{$J-}
+{$mode delphi}{$H+}{$J-}
 {$modeswitch nestedprocvars}
 {$modeswitch functionreferences}
 {$modeswitch anonymousfunctions}
@@ -49,89 +49,88 @@ uses
 type
   EPickCheckError = class(Exception) end;
 
-  generic TSpecifierGeneratorFunc<T> = reference to function: T;
-  generic TMakeObjectFunc<T> = reference to function: T;
+  TSpecifierGeneratorFunc<T> = reference to function: T;
+  TMakeObjectFunc<T> = reference to function: T;
   TRandomFunc = function(value: LongInt): LongInt;
-  generic TPredicateFunc<T> = function(value: array of T): Boolean; // unlike JSCheck, this is passed into an internal function.
-  generic TSignatures<T> = array of specialize TSpecifierGeneratorFunc<T>;
-  generic TCheckPropertyValues<T> = array of T;
+  TPredicateFunc<T> = function(value: array of T): Boolean; // unlike JSCheck, this is passed into an internal function.
+  TSignatures<T> = array of TSpecifierGeneratorFunc<T>;
+  TCheckPropertyValues<T> = array of T;
 
   TCheckPropertyOptions = class;
 
-  generic TCheckProperty<T> = class
+  TCheckProperty<T> = class
     fSerial: TGuid;
-    fValues: specialize TCheckPropertyValues<T>;
+    fValues: TCheckPropertyValues<T>;
     fClassification: String;
     fVerdict: Boolean;
   public
     property Serial: TGuid read fSerial write fSerial;
-    property Values: specialize TCheckPropertyValues<T> read fValues write fValues;
+    property Values: TCheckPropertyValues<T> read fValues write fValues;
     property Classification: String read fClassification write fClassification;
     property Verdict: Boolean read fVerdict write fVerdict;
   end;
 
-  generic TCheckProperties<T> = array of specialize TCheckProperty<T>;
-
-  generic TCheckPropertyBuilder<T> = class
+  TCheckPropertyBuilder<T> = class
   private
     fName: String;
-    fSignatures: specialize TSignatures<T>;
+    fSignatures: TSignatures<T>;
   public
     function Predicate(values: array of T): Boolean; virtual;
     function Classify(values: array of T): String; virtual;
-    procedure Build(var built: specialize TCheckProperty<T>);
-    property Signatures: specialize TSignatures<T> read fSignatures write fSignatures;
+    procedure Build(var built: TCheckProperty<T>);
+    property Signatures: TSignatures<T> read fSignatures write fSignatures;
     property Name: String read fName write fName;
   end;
 
-  generic TCheckPropertyReport<T> = class
+  TCheckProperties<T> = class(TObjectList<TCheckProperty<T>>);
+
+  TCheckPropertyReport<T> = class
   private
     fName: String;
-    fFails: specialize TObjectList<specialize TCheckProperty<T>>;
-    fPasses: specialize TObjectList<specialize TCheckProperty<T>>;
+    fFails: TCheckProperties<T>;
+    fPasses: TCheckProperties<T>;
   public
     constructor Create;
     destructor Destroy; override;
     // TODO: start to use TLists, because saying array of specialize ... in a property falls apart
-    procedure AddFail(fail: specialize TCheckProperty<T>);
-    function AllFails: specialize TObjectList<specialize TCheckProperty<T>>;
-    procedure AddPass(pass: specialize TCheckProperty<T>);
-    function AllPasses: specialize TObjectList<specialize TCheckProperty<T>>;
+    procedure AddFail(fail: TCheckProperty<T>);
+    function AllFails: TCheckProperties<T>;
+    procedure AddPass(pass: TCheckProperty<T>);
+    function AllPasses: TCheckProperties<T>;
     property Name: String read fName write fName;
   end;
 
-  generic TCheckPropertyReporter<T> = class
+  TCheckPropertyReporter<T> = class
   protected
-    fReport: specialize TCheckPropertyReport<T>;
+    fReport: TCheckPropertyReport<T>;
     fOptions: TCheckPropertyOptions;
   public
-    constructor Create(report: specialize TCheckPropertyReport<T>; options: TCheckPropertyOptions);
+    constructor Create(report: TCheckPropertyReport<T>; options: TCheckPropertyOptions);
     procedure DoReport; virtual;
-    property Report: specialize TCheckPropertyReport<T> read fReport write fReport;
+    property Report: TCheckPropertyReport<T> read fReport write fReport;
   end;
 
-  generic TCheckPropertyConsoleReporter<T> = class(specialize TCheckPropertyReporter<T>)
+  TCheckPropertyConsoleReporter<T> = class(TCheckPropertyReporter<T>)
   public
     procedure DoReport; override;
   end;
 
+  TCheckPropertyReports<T> = array of TCheckPropertyReport<T>;
 
-  generic TCheckPropertyReports<T> = array of specialize TCheckPropertyReport<T>;
-
-  generic TCheckPropertySuite<T> = class
+  TCheckPropertySuite<T> = class
   private
-    fProperties: array of specialize TCheckPropertyBuilder<T>;
+    fProperties: array of TCheckPropertyBuilder<T>;
     fPropCount: Integer;
     fConfig: TCheckPropertyOptions;
-    fReport: specialize TCheckPropertyReports<T>;
+    fReport: TCheckPropertyReports<T>;
   public
-    constructor Create;
-    constructor Create(config: TCheckPropertyOptions);
+    constructor Create; overload;
+    constructor Create(config: TCheckPropertyOptions); overload;
     destructor Destroy; override;
-    procedure AddProperty(prop: specialize TCheckPropertyBuilder<T>);
+    procedure AddProperty(prop: TCheckPropertyBuilder<T>);
     procedure Check;
 
-    property Report: specialize TCheckPropertyReports<T> read fReport;
+    property Report: TCheckPropertyReports<T> read fReport;
     property Options: TCheckPropertyOptions read fConfig write fConfig;
   end;
 
@@ -153,24 +152,23 @@ type
     property StopOnFirstFail: Boolean read fStopOnFail write fStopOnFail;
   end;
 
-  generic function MakeACheckPropertyReport<T>: specialize TCheckPropertyReport<T>;
-  generic function MakeObjectListOfProps<T>: specialize TObjectList<specialize TCheckProperty<T>>;
+  function MakeACheckPropertyReport<T>: TCheckPropertyReport<T>;
 
 implementation
 
 { TCheckPropertyBuilder }
 
-function TCheckPropertyBuilder.Predicate(values: array of T): Boolean;
+function TCheckPropertyBuilder<T>.Predicate(values: array of T): Boolean;
 begin
   Result := True;
 end;
 
-function TCheckPropertyBuilder.Classify(values: array of T): String;
+function TCheckPropertyBuilder<T>.Classify(values: array of T): String;
 begin
   Result := '(not classified)';
 end;
 
-procedure TCheckPropertyBuilder.Build(var built: specialize TCheckProperty<T>);
+procedure TCheckPropertyBuilder<T>.Build(var built: TCheckProperty<T>);
 var
   sigArgs: array of T;
   i: Integer;
@@ -216,14 +214,14 @@ end;
 
 { TCheckPropertySuite }
 
-constructor TCheckPropertySuite.Create;
+constructor TCheckPropertySuite<T>.Create; overload;
 begin
   fConfig := TCheckPropertyOptions.Create;
   SetLength(fProperties, 255);
   fPropCount := 0;
 end;
 
-constructor TCheckPropertySuite.Create(config: TCheckPropertyOptions);
+constructor TCheckPropertySuite<T>.Create(config: TCheckPropertyOptions); overload;
 begin
   fConfig := config;
   SetLength(fProperties, 255);
@@ -231,7 +229,7 @@ begin
 
 end;
 
-destructor TCheckPropertySuite.Destroy;
+destructor TCheckPropertySuite<T>.Destroy;
 var
   I: Integer;
 begin
@@ -247,21 +245,21 @@ begin
   end;
 end;
 
-procedure TCheckPropertySuite.AddProperty(prop: specialize TCheckPropertyBuilder<T>);
+procedure TCheckPropertySuite<T>.AddProperty(prop: TCheckPropertyBuilder<T>);
 begin
   fProperties[fPropCount] := prop;
   Inc(fPropCount);
 end;
 
-generic function MakeACheckPropertyReport<T>: specialize TCheckPropertyReport<T>;
+function MakeACheckPropertyReport<T>: TCheckPropertyReport<T>;
 begin
-  Result := specialize TCheckPropertyReport<T>.Create;
+  Result := TCheckPropertyReport<T>.Create;
 end;
 
-procedure TCheckPropertySuite.Check;
+procedure TCheckPropertySuite<T>.Check;
 var
   i, j: Integer;
-  built: specialize TCheckProperty<T>;
+  built: TCheckProperty<T>;
   trials: Integer;
 begin
   SetLength(fReport, fPropCount);
@@ -270,10 +268,10 @@ begin
 
   for i := 0 to fPropCount - 1 do
   begin
-    fReport[i] := specialize MakeACheckPropertyReport<T>;
+    fReport[i] := MakeACheckPropertyReport<T>();
     for j := 1 to trials do
     begin
-      built := specialize TCheckProperty<T>.Create;
+      built := TCheckProperty<T>.Create;
       fProperties[i].Build(built);
 
       if built.Verdict then
@@ -290,62 +288,57 @@ begin
   end;
 end;
 
-generic function MakeObjectListOfProps<T>: specialize TObjectList<specialize TCheckProperty<T>>;
-begin
-  Result :=  specialize TObjectList<specialize TCheckProperty<T>>.Create;
-end;
-
 { TCheckPropertyReport }
-constructor TCheckPropertyReport.Create;
+constructor TCheckPropertyReport<T>.Create;
 begin
-  fFails := specialize MakeObjectListOfProps<T>;
-  fPasses := specialize MakeObjectListOfProps<T>;
+  fFails := TCheckProperties<T>.Create;
+  fPasses := TCheckProperties<T>.Create;
 end;
 
-destructor TCheckPropertyReport.Destroy;
+destructor TCheckPropertyReport<T>.Destroy;
 begin
   fPasses.Free;
   fFails.Free;
 end;
 
-procedure TCheckPropertyReport.AddFail(fail: specialize TCheckProperty<T>);
+procedure TCheckPropertyReport<T>.AddFail(fail: TCheckProperty<T>);
 begin
   fFails.Add(fail);
 end;
 
-function TCheckPropertyReport.AllFails: specialize TObjectList<specialize TCheckProperty<T>>;
+function TCheckPropertyReport<T>.AllFails: TCheckProperties<T>;
 begin
     Result := fFails;
 end;
 
-procedure TCheckPropertyReport.AddPass(pass: specialize TCheckProperty<T>);
+procedure TCheckPropertyReport<T>.AddPass(pass: TCheckProperty<T>);
 begin
   fPasses.Add(pass);
 end;
 
-function TCheckPropertyReport.AllPasses: specialize TObjectList<specialize TCheckProperty<T>>;
+function TCheckPropertyReport<T>.AllPasses: TCheckProperties<T>;
 begin
   Result := fPasses;
 end;
 
 { TCheckPropertyReporter }
-constructor TCheckPropertyReporter.Create(report: specialize TCheckPropertyReport<T>; options: TCheckPropertyOptions);
+constructor TCheckPropertyReporter<T>.Create(report: TCheckPropertyReport<T>; options: TCheckPropertyOptions);
 begin
   fReport := report;
   fOptions := options;
 end;
 
-procedure TCheckPropertyReporter.DoReport;
+procedure TCheckPropertyReporter<T>.DoReport;
 begin
   WriteLn('(not implemented)');
 end;
 
 
 { TCheckPropertyReporter }
-procedure TCheckPropertyConsoleReporter.DoReport;
+procedure TCheckPropertyConsoleReporter<T>.DoReport;
 var
   i : Integer;
-  failingReport: specialize TCheckProperty<T>;
+  failingReport: TCheckProperty<T>;
 begin
   if fReport.AllPasses.Count = fOptions.NumberOfTrials then
   begin

@@ -1,6 +1,6 @@
 unit pickcheck.example;
 
-{$mode objfpc}{$H+}{$J-}
+{$mode delphi}{$H+}{$J-}
 {$modeswitch nestedprocvars}
 {$modeswitch functionreferences}
 {$modeswitch anonymousfunctions}
@@ -10,7 +10,7 @@ interface
 uses pickcheck, pickcheck.specifiers, pickcheck.checker;
 
 type
-  TMyCheckPropertyBuilder = class (specialize TCheckPropertyBuilder<Integer>)
+  TMyCheckPropertyBuilder = class(TCheckPropertyBuilder<Integer>)
   public
    function Predicate(value: array of Integer): Boolean; override;
    function Classify(value: array of Integer): String; override;
@@ -40,16 +40,16 @@ end;
 
 procedure RunExample;
 var
-  a: specialize TCheckPropertySuite<Integer>;
+  a: TCheckPropertySuite<Integer>;
   builder: TMyCheckPropertyBuilder;
-  prop: specialize TCheckProperty<Integer>;
-  suite: specialize TCheckPropertySuite<Integer>;
+  prop: TCheckProperty<Integer>;
+  suite: TCheckPropertySuite<Integer>;
 begin
-  a := specialize TCheckPropertySuite<Integer>.Create;
+  a := TCheckPropertySuite<Integer>.Create;
   builder := TMyCheckPropertyBuilder.Create;
   builder.Name := 'This tests an array';
-  builder.Signatures := [specialize GenNumber<Integer>(1, 2000), specialize GenNumber<Integer>(1, 2000)];
-  prop := specialize TCheckProperty<Integer>.Create;
+  builder.Signatures := [GenNumber<Integer>(1, 2000), GenNumber<Integer>(1, 2000)];
+  prop := TCheckProperty<Integer>.Create;
   builder.Build(prop);
   WriteLn('OK');
   WriteLn('Name: ', builder.Name);
@@ -65,12 +65,12 @@ end;
 
 procedure RunPropertyExample;
 var
-  suite: specialize TCheckPropertySuite<Integer>;
-  reporter: specialize TCheckPropertyConsoleReporter<Integer>;
+  suite: TCheckPropertySuite<Integer>;
+  reporter: TCheckPropertyConsoleReporter<Integer>;
 begin
   try
-    suite := specialize PropertyChecker<Integer>.
-      ForAll([specialize GenNumber<Integer>(1,1000), specialize GenNumber<Integer>(1,1000)],
+    suite := PropertyChecker<Integer>.
+      ForAll([GenNumber<Integer>(1,1000), GenNumber<Integer>(1,1000)],
              function(value: array of Integer): Boolean
                begin
                  Result := value[0] > value[1];
@@ -79,7 +79,7 @@ begin
       WithNumberOfTrials(100).
       Check;
 
-    reporter := specialize TCheckPropertyConsoleReporter<Integer>.Create(suite.Report[0], suite.Options);
+    reporter := TCheckPropertyConsoleReporter<Integer>.Create(suite.Report[0], suite.Options);
     reporter.DoReport;
 
   finally
@@ -94,14 +94,14 @@ end;
 
 procedure RunAnotherExample;
 var
-  suite: specialize TCheckPropertySuite<Integer>;
-  reporter: specialize TCheckPropertyConsoleReporter<Integer>;
+  suite: TCheckPropertySuite<Integer>;
+  reporter: TCheckPropertyConsoleReporter<Integer>;
 
 begin
   try
 
-    suite := specialize PropertyChecker<Integer>.
-      ForAll([specialize GenNumber<Integer>(1,2000)],
+    suite := PropertyChecker<Integer>.
+      ForAll([GenNumber<Integer>(1,2000)],
              function(value: array of Integer): Boolean
                begin
                  Result := value[0] <= 2000;
@@ -110,7 +110,7 @@ begin
       WithNumberOfTrials(100).
       Check;
 
-    reporter := specialize TCheckPropertyConsoleReporter<Integer>.Create(suite.Report[0], suite.Options);
+    reporter := TCheckPropertyConsoleReporter<Integer>.Create(suite.Report[0], suite.Options);
     reporter.DoReport;
 
 
