@@ -1,6 +1,6 @@
 unit PickCheck.Specifiers;
 
-{$mode objfpc}{$H+}{$J-}
+{$mode delphi}{$H+}{$J-}
 {$modeswitch nestedprocvars}
 {$modeswitch functionreferences}
 {$modeswitch anonymousfunctions}
@@ -8,10 +8,10 @@ unit PickCheck.Specifiers;
 interface
 
 uses
-  cthreads, Classes, SysUtils, StrUtils, Generics.Collections, PickCheck;
+  cthreads, Classes, SysUtils, StrUtils, Generics.Collections;
 
 const
-    Primes: array of Integer = (
+    Primes: array of Integer = [
     2, 3, 5, 7, 11, 13, 17, 19, 23, 29,
     31, 37, 41, 43, 47, 53, 59, 61, 67, 71,
     73, 79, 83, 89, 97, 101, 103, 107, 109, 113,
@@ -28,35 +28,39 @@ const
     739, 743, 751, 757, 761, 769, 773, 787, 797, 809,
     811, 821, 823, 827, 829, 839, 853, 857, 859, 863,
     877, 881, 883, 887, 907, 911, 919, 929, 937, 941,
-    947, 953, 967, 971, 977, 983, 991, 997);
+    947, 953, 967, 971, 977, 983, 991, 997];
 
+type
+  TSpecifierGeneratorFunc<T> = reference to function: T;
+  TMakeObjectFunc<T> = reference to function: T;
+  EPickCheckSpecifierError = class(Exception) end;
 
-generic function Resolve<T>(value: T; rest: array of T): T;
+function Resolve<T>(value: T; rest: array of T): T;
 
 { These functions generate random values. }
-generic function GenLiteral<T>(Value: T): specialize TSpecifierGeneratorFunc<T>;
-generic function GenBool<Boolean>(bias: Double): specialize TSpecifierGeneratorFunc<Boolean>;
-generic function GenNumber<Integer>(fromNum: Integer = 1; toNum: Integer = 0): specialize TSpecifierGeneratorFunc<Integer>;
-generic function GenOneOf<T>(values: array of T): specialize TSpecifierGeneratorFunc<T>;
-generic function GenOneOf<T>(values: array of T; weights: array of Double): specialize TSpecifierGeneratorFunc<T>;
-generic function GenSequence<T>(values: array of T): specialize TSpecifierGeneratorFunc<T>;
-generic function GenInteger<Integer>: specialize TSpecifierGeneratorFunc<Integer>;
-generic function GenInteger<Integer>(I: Integer; J: Integer): specialize TSpecifierGeneratorFunc<Integer>;
-// generic function GenCharacter<Char>: specialize TSpecifierGeneratorFunc<Char>;
-generic function GenCharacter<Char>(i: String): specialize TSpecifierGeneratorFunc<Char>;
-// generic function GenArray<T>(First: array of T; fillValue: T): specialize TSpecifierGeneratorFunc<array<T>>;
-generic function GenString<T>(parameters: array of String): specialize TSpecifierGeneratorFunc<String>;
-generic function GenAny<T>(): specialize TSpecifierGeneratorFunc<T>;
-generic function GenObject<T>(makeObjectFunc: specialize TMakeObjectFunc<T>): specialize TSpecifierGeneratorFunc<T>;
+function GenLiteral<T>(Value: T): TSpecifierGeneratorFunc<T>;
+function GenBool<Boolean>(bias: Double): TSpecifierGeneratorFunc<Boolean>;
+function GenNumber<Integer>(fromNum: Integer = 1; toNum: Integer = 0): TSpecifierGeneratorFunc<Integer>;
+function GenOneOf<T>(values: array of T): TSpecifierGeneratorFunc<T>; overload;
+function GenOneOf<T>(values: array of T; weights: array of Double): TSpecifierGeneratorFunc<T>; overload;
+function GenSequence<T>(values: array of T): TSpecifierGeneratorFunc<T>;
+function GenInteger<Integer>: TSpecifierGeneratorFunc<Integer>; overload;
+function GenInteger<Integer>(I: Integer; J: Integer): TSpecifierGeneratorFunc<Integer>; overload;
+// function GenCharacter<Char>: TSpecifierGeneratorFunc<Char>;
+function GenCharacter<Char>(i: String): TSpecifierGeneratorFunc<Char>;
+// function GenArray<T>(First: array of T; fillValue: T): TSpecifierGeneratorFunc<array<T>>;
+function GenString<T>(parameters: array of String): TSpecifierGeneratorFunc<String>;
+function GenAny<T>(): TSpecifierGeneratorFunc<T>;
+function GenObject<T>(makeObjectFunc: TMakeObjectFunc<T>): TSpecifierGeneratorFunc<T>;
 
 implementation
 
-generic function Resolve<T>(value: T; rest: array of T): T;
+function Resolve<T>(value: T; rest: array of T): T;
 begin
   Result := value;
 end;
 
-generic function GenLiteral<T>(value: T): specialize TSpecifierGeneratorFunc<T>;
+function GenLiteral<T>(value: T): TSpecifierGeneratorFunc<T>;
 begin
   Result := function: T
     begin
@@ -64,16 +68,16 @@ begin
     end;
 end;
 
-generic function GenBool<Boolean>(bias: Double): specialize TSpecifierGeneratorFunc<Boolean>;
+function GenBool<Boolean>(bias: Double): TSpecifierGeneratorFunc<Boolean>;
 begin
-//  bias := specialize Resolve<Double>(bias, []);
+//  bias := Resolve<Double>(bias, []);
   Result := function(): Boolean
   begin
     Result := (Random < bias);
   end;
 end;
 
-generic function GenNumber<Integer>(fromNum: Integer = 1; toNum: Integer = 0): specialize TSpecifierGeneratorFunc<Integer>;
+function GenNumber<Integer>(fromNum: Integer = 1; toNum: Integer = 0): TSpecifierGeneratorFunc<Integer>;
 var
   temp: Integer;
   difference: Integer;
@@ -92,7 +96,7 @@ begin
     end;
 end;
 
-generic function GenOneOf<T>(values: array of T): specialize TSpecifierGeneratorFunc<T>;
+function GenOneOf<T>(values: array of T): TSpecifierGeneratorFunc<T>; overload;
 begin
   Result := function: T
   var
@@ -111,7 +115,7 @@ begin
   end;
 end;
 
-generic function GenOneOf<T>(values: array of T; weights: array of Double): specialize TSpecifierGeneratorFunc<T>;
+function GenOneOf<T>(values: array of T; weights: array of Double): TSpecifierGeneratorFunc<T>; overload;
 var
   I: Integer;
   totalWeight: Double = 0.0;
@@ -122,7 +126,7 @@ var
 begin
   if (Length(values) < 1) or (Length(values) <> Length(weights)) then
   begin
-    raise EPickCheckError.Create('Values and weight array lengths must be > 0 and equal to each other.');
+    raise EPickCheckSpecifierError.Create('Values and weight array lengths must be > 0 and equal to each other.');
   end;
 
   // reduce to sum of weights
@@ -166,16 +170,16 @@ begin
   end;
 end;
 
-generic function GenSequence<T>(values: array of T): specialize TSpecifierGeneratorFunc<T>;
+function GenSequence<T>(values: array of T): TSpecifierGeneratorFunc<T>;
 begin
 end;
 
-generic function GenInteger<Integer>: specialize TSpecifierGeneratorFunc<Integer>;
+function GenInteger<Integer>: TSpecifierGeneratorFunc<Integer>; overload;
 begin
-  Result := specialize GenOneOf<Integer>(primes);
+  Result := GenOneOf<Integer>(primes);
 end;
 
-generic function GenInteger<Integer>(I: Integer; J: Integer): specialize TSpecifierGeneratorFunc<Integer>;
+function GenInteger<Integer>(I: Integer; J: Integer): TSpecifierGeneratorFunc<Integer>; overload;
 var
   temp: Integer;
 begin
@@ -191,29 +195,29 @@ begin
     end;
 end;
 
-// generic function GenCharacter<Char>(): specialize TSpecifierGeneratorFunc<Char>;
+// function GenCharacter<Char>(): TSpecifierGeneratorFunc<Char>;
 // begin
-//   Result := specialize GenCharacter<Char>(Chr(32), Chr(126));
+//   Result := GenCharacter<Char>(Chr(32), Chr(126));
 // end;
 
-generic function GenCharacter<Char>(i: String): specialize TSpecifierGeneratorFunc<Char>;
+function GenCharacter<Char>(i: String): TSpecifierGeneratorFunc<Char>;
 begin
-//  Result := specialize GenOneOf<Char>(SplitString(i, ''));
+//  Result := GenOneOf<Char>(SplitString(i, ''));
 end;
 
-//generic function GenArray<T>(First: array of T; fillValue: T): specialize TSpecifierGeneratorFunc<array of T>;
+//function GenArray<T>(First: array of T; fillValue: T): TSpecifierGeneratorFunc<array of T>;
 //begin
 //end;
 
-generic function GenString<T>(parameters: array of String): specialize TSpecifierGeneratorFunc<String>;
+function GenString<T>(parameters: array of String): TSpecifierGeneratorFunc<String>;
 begin
 end;
 
-generic function GenAny<T>(): specialize TSpecifierGeneratorFunc<T>;
+function GenAny<T>(): TSpecifierGeneratorFunc<T>;
 begin
 end;
 
-generic function GenObject<T>(makeObjectFunc: specialize TMakeObjectFunc<T>): specialize TSpecifierGeneratorFunc<T>;
+function GenObject<T>(makeObjectFunc: TMakeObjectFunc<T>): TSpecifierGeneratorFunc<T>;
 begin
 end;
 

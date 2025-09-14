@@ -44,17 +44,11 @@ unit PickCheck;
 interface
 
 uses
-  cthreads, Classes, SysUtils, StrUtils, Generics.Collections;
+  cthreads, Classes, SysUtils, StrUtils,
+  Generics.Collections, PickCheck.Specifiers;
 
 type
-  EPickCheckError = class(Exception) end;
-
-  TSpecifierGeneratorFunc<T> = reference to function: T;
-  TMakeObjectFunc<T> = reference to function: T;
   TRandomFunc = function(value: LongInt): LongInt;
-  TPredicateFunc<T> = function(value: array of T): Boolean; // unlike JSCheck, this is passed into an internal function.
-  TClassifierFunc<T> = function(value: array of T): String;
-
   TSignatures<T> = array of TSpecifierGeneratorFunc<T>;
   TCheckPropertyValues<T> = array of T;
 

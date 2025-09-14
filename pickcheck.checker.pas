@@ -11,6 +11,9 @@ uses
   pickcheck;
 
 type
+  TPredicateFunc<T> = function(value: array of T): Boolean; // unlike JSCheck, this is passed into an internal function.
+  TClassifierFunc<T> = function(value: array of T): String;
+
   TPropertyCheckerBuilder<T> = class (TCheckPropertyBuilder<T>)
     fPredFunc: TPredicateFunc<T>;
     fClassifyFunc: TClassifierFunc<T>;
