@@ -27,7 +27,6 @@ type
     fBuilder: TPropertyCheckerBuilder<T>;
     public
     constructor ForAll(signatures: TSignatures<T>; predicateFunc: TPredicateFunc<T>);
-    //    procedure ForAllSetup(signatures: specialize TSignatures<T>; predicateFunc: specialize TPredicateFunc<T>);
     function WithClassifier(classifier: TClassifierFunc<T>): PropertyChecker<T>;
     function WithName(name: String): PropertyChecker<T>;
     function WithConfig(options: TCheckPropertyOptions): PropertyChecker<T>;
@@ -56,7 +55,7 @@ begin
   begin
     Result := fClassifyFunc(value);
   end else begin
-    Result := '';
+    Result := '(not classified)';
   end;
 end;
 

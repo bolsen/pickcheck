@@ -91,6 +91,7 @@ type
     fName: String;
     fFails: TCheckProperties<T>;
     fPasses: TCheckProperties<T>;
+    fClassifications: TDictionary<String, Integer>;
   public
     constructor Create;
     destructor Destroy; override;
@@ -99,7 +100,9 @@ type
     function AllFails: TCheckProperties<T>;
     procedure AddPass(pass: TCheckProperty<T>);
     function AllPasses: TCheckProperties<T>;
+    procedure CountClassifications;
     property Name: String read fName write fName;
+    property Classifications: TDictionary<String, Integer> read fClassifications;
   end;
 
   TCheckPropertyReporter<T> = class
@@ -293,6 +296,9 @@ destructor TCheckPropertyReport<T>.Destroy;
 begin
   fPasses.Free;
   fFails.Free;
+
+  if fClassifications <> Nil then
+    fClassifications.Free;
 end;
 
 procedure TCheckPropertyReport<T>.AddFail(fail: TCheckProperty<T>);
@@ -315,6 +321,32 @@ begin
   Result := fPasses;
 end;
 
+procedure TCheckPropertyReport<T>.CountClassifications;
+var
+  report: TCheckProperty<T>;
+begin
+  fClassifications := TDictionary<String, Integer>.Create;
+  for report in AllPasses do
+  begin
+    if fClassifications.ContainsKey(report.Classification) then
+    begin
+      fClassifications[report.Classification] := fClassifications[report.Classification] + 1;
+    end else begin
+      fClassifications.Add(report.Classification, 1);
+    end;
+  end;
+
+  for report in AllFails do
+  begin
+    if fClassifications.ContainsKey(report.Classification) then
+    begin
+      fClassifications[report.Classification] := fClassifications[report.Classification] + 1;
+    end else begin
+      fClassifications.Add(report.Classification, 1);
+    end;
+  end;
+end;
+
 { TCheckPropertyReporter }
 constructor TCheckPropertyReporter<T>.Create(report: TCheckPropertyReport<T>; options: TCheckPropertyOptions);
 begin
@@ -327,16 +359,29 @@ begin
   WriteLn('(not implemented)');
 end;
 
-
 { TCheckPropertyReporter }
 procedure TCheckPropertyConsoleReporter<T>.DoReport;
 var
   i : Integer;
   failingReport: TCheckProperty<T>;
+
+  procedure PrintClassifications;
+  var
+    classKey: String;
+  begin
+    fReport.CountClassifications;
+    for classKey in fReport.Classifications.Keys do
+    begin
+      WriteLn(Format('"%s" occurred %d times.', [classKey, fReport.Classifications[classKey]]));
+    end;
+  end;
+
 begin
   if fReport.AllPasses.Count = fOptions.NumberOfTrials then
   begin
     WriteLn(fOptions.Name, ': All tests passed!');
+    PrintClassifications;
+    WriteLn('');
   end else if fOptions.StopOnFirstFail then
   begin
     WriteLn(Format('%s: Falsification after %d tests.',
@@ -350,11 +395,14 @@ begin
     begin
       WriteLn(failingReport.Values[i]);
     end;
+    PrintClassifications;
     WriteLn('');
   end else begin
     WriteLn('For ', fReport.Name);
     WriteLn('Pass: ', fReport.AllPasses.Count);
     WriteLn('Fail: ', fReport.AllFails.Count);
+    PrintClassifications;
+    WriteLn('');
   end;
 
 end;
