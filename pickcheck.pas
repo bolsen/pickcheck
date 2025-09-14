@@ -53,6 +53,8 @@ type
   TMakeObjectFunc<T> = reference to function: T;
   TRandomFunc = function(value: LongInt): LongInt;
   TPredicateFunc<T> = function(value: array of T): Boolean; // unlike JSCheck, this is passed into an internal function.
+  TClassifierFunc<T> = function(value: array of T): String;
+
   TSignatures<T> = array of TSpecifierGeneratorFunc<T>;
   TCheckPropertyValues<T> = array of T;
 
@@ -152,8 +154,6 @@ type
     property StopOnFirstFail: Boolean read fStopOnFail write fStopOnFail;
   end;
 
-  function MakeACheckPropertyReport<T>: TCheckPropertyReport<T>;
-
 implementation
 
 { TCheckPropertyBuilder }
@@ -251,11 +251,6 @@ begin
   Inc(fPropCount);
 end;
 
-function MakeACheckPropertyReport<T>: TCheckPropertyReport<T>;
-begin
-  Result := TCheckPropertyReport<T>.Create;
-end;
-
 procedure TCheckPropertySuite<T>.Check;
 var
   i, j: Integer;
@@ -265,10 +260,9 @@ begin
   SetLength(fReport, fPropCount);
 
   trials := fConfig.NumberOfTrials;
-
   for i := 0 to fPropCount - 1 do
   begin
-    fReport[i] := MakeACheckPropertyReport<T>();
+    fReport[i] := TCheckPropertyReport<T>.Create;
     for j := 1 to trials do
     begin
       built := TCheckProperty<T>.Create;

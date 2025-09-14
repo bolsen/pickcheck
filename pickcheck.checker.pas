@@ -34,10 +34,6 @@ type
     function Check: TCheckPropertySuite<T>;
   end;
 
-
-function MakeAPropCheckeBuilder<T>(predicateFunc: TPredicateFunc<T>): TPropertyCheckerBuilder<T>;
-function MakeASuite<T>(options: TCheckPropertyOptions): TCheckPropertySuite<T>;
-
 implementation
 
 { TPropertycheckerbuilder }
@@ -104,14 +100,9 @@ begin
   Result := Self;
 end;
 
-function MakeASuite<T>(options: TCheckPropertyOptions): TCheckPropertySuite<T>;
-begin
-  Result := TCheckPropertySuite<T>.Create(options);
-end;
-
 function PropertyChecker<T>.Check: TCheckPropertySuite<T>;
 begin
-  Result := MakeASuite<T>(fOptions);
+  Result := TCheckPropertySuite<T>.Create(fOptions);
   Result.AddProperty(fBuilder);
   Result.Check;
 end;
