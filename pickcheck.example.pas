@@ -1,4 +1,4 @@
-unit pickcheck.example;
+unit PickCheck.Example;
 
 {$mode delphi}{$H+}{$J-}
 {$modeswitch nestedprocvars}
@@ -7,7 +7,7 @@ unit pickcheck.example;
 
 interface
 
-uses pickcheck, pickcheck.specifiers, pickcheck.checker;
+uses PickCheck.types, PickCheck.Specifiers, PickCheck.Checker;
 
 type
   TMyCheckPropertyBuilder = class(TCheckPropertyBuilder<Integer>)
@@ -102,6 +102,7 @@ end;
 
 procedure RunAnotherExample;
 var
+  f: PropertyChecker<Integer>;
   suite: TCheckPropertySuite<Integer>;
   reporter: TCheckPropertyConsoleReporter<Integer>;
 
@@ -123,6 +124,7 @@ begin
 
 
   finally
+//    f.Free;
     suite.Free;
     reporter.Free;
   end;

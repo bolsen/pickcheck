@@ -4,9 +4,12 @@ program tests;
 {$H+}
 
 
-uses SysUtils, pickcheck, pickcheck.specifiers, pickcheck.example;
+uses SysUtils, PickCheck, PickCheck.Example;
 
 begin
+  {$if declared(UseHeapTrace)}
+  HeapTrc.KeepReleased := True;
+  {$endif}
   RandSeed := GetTickCount64;
   // writeln(specialize GenLiteral<String>('A')());
   // writeln('test: ', specialize GenBool<Boolean>(0.5)());
@@ -22,7 +25,12 @@ begin
   // writeln(round(random*2000));
   // writeln(round(random*2000));
 
-//  RunExample;
+  //RunExample;
   RunPropertyExample;
-  RunAnotherExample;
+RunAnotherExample;
+  RunWithClassifier;
+//  RunPropertyExample;
+//  RunAnotherExample;
+//  RunWithClassifier;
+
 end.

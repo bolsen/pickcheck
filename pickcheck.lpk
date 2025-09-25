@@ -2,17 +2,24 @@
 <CONFIG>
   <Package Version="5">
     <Name Value="PickCheck"/>
-    <Type Value="RunAndDesignTime"/>
+    <Type Value="RunTimeOnly"/>
+    <Author Value="Brian Olsen"/>
     <CompilerOptions>
       <Version Value="11"/>
       <SearchPaths>
-        <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)/"/>
+        <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
       </SearchPaths>
     </CompilerOptions>
+    <Description Value="Property checking and testing reminiscent of QuickCheck."/>
+    <License Value="LGPL"/>
     <Files>
       <Item>
         <Filename Value="pickcheck.pas"/>
         <UnitName Value="PickCheck"/>
+      </Item>
+      <Item>
+        <Filename Value="pickcheck.types.pas"/>
+        <UnitName Value="PickCheck.Types"/>
       </Item>
       <Item>
         <Filename Value="pickcheck.specifiers.pas"/>

@@ -1,4 +1,4 @@
-unit pickcheck.checker;
+unit PickCheck.Checker;
 
 {$mode delphi}{$H+}{$J-}
 {$modeswitch nestedprocvars}
@@ -8,7 +8,7 @@ unit pickcheck.checker;
 interface
 
 uses
-  pickcheck;
+  PickCheck.Types;
 
 type
   TPredicateFunc<T> = function(value: array of T): Boolean; // unlike JSCheck, this is passed into an internal function.
@@ -29,14 +29,15 @@ type
     fOptions: TCheckPropertyOptions;
     fBuilder: TPropertyCheckerBuilder<T>;
     public
-    constructor ForAll(signatures: TSignatures<T>; predicateFunc: TPredicateFunc<T>);
-    function WithClassifier(classifier: TClassifierFunc<T>): PropertyChecker<T>;
-    function WithName(name: String): PropertyChecker<T>;
-    function WithConfig(options: TCheckPropertyOptions): PropertyChecker<T>;
-    function WithNumberOfTrials(count: Integer): PropertyChecker<T>;
-    function WithSeed(seed: longint): PropertyChecker<T>; // TODO: This is non-functioning.
-    function StopOnFail(value: Boolean): PropertyChecker<T>;
-    function Check: TCheckPropertySuite<T>;
+      constructor ForAll(signatures: TSignatures<T>; predicateFunc: TPredicateFunc<T>);
+      destructor Destroy; override;
+      function WithClassifier(classifier: TClassifierFunc<T>): PropertyChecker<T>;
+      function WithName(name: String): PropertyChecker<T>;
+      function WithConfig(options: TCheckPropertyOptions): PropertyChecker<T>;
+      function WithNumberOfTrials(count: Integer): PropertyChecker<T>;
+      function WithSeed(seed: longint): PropertyChecker<T>; // TODO: This is non-functioning.
+      function StopOnFail(value: Boolean): PropertyChecker<T>;
+      function Check: TCheckPropertySuite<T>;
   end;
 
 implementation
@@ -45,6 +46,14 @@ implementation
 constructor TPropertyCheckerBuilder<T>.Create(predicateFunc: TPredicateFunc<T>);
 begin
   fPredFunc := predicateFunc;
+end;
+
+destructor PropertyChecker<T>.Destroy;
+begin
+  if fOptions <> Nil then
+    fOptions.Free;
+  if fBuilder <> Nil then
+    fBuilder.Free;
 end;
 
 function TPropertyCheckerBuilder<T>.Predicate(value: array of T): Boolean;
