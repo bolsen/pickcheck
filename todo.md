@@ -1,6 +1,6 @@
 # TODO
 
-1. [ ] Cannot use classifiers yet in output
+1. [X] Cannot use classifiers yet in output
 2. [ ] Refactor types into separate units to make it easier to navigate
 3. [ ] Write a test suite
 4. [ ] Maybe refactor specifiers? Primarily something where they can print themselves?
