@@ -1,6 +1,6 @@
 # PickCheck : QuickCheck for Free Pascal
 
-Note: This is in development, so it doesn't work at all right now.
+Note: This is in development. It's in a proof-of-concept stage, so there is a bunch of things to do to make it useful.
 
 This is an implementation of QuickCheck for Free Pascal (Object Pascal) loosely based on Douglas Crockford's JSCheck and a fluid interface influenced by jetCheck for Java. It's not complete, so the readme here now has caveats on the API design.
 
@@ -18,7 +18,9 @@ There is nothing special at the moment to do other than to run the test:
 
 `fpc tests.lpr && ./tests`
 
-There is a package file for Lazarus also.
+There is a package file for Lazarus also. To install it:
+
+`lazbuild --add-package pickcheck.lpk`
 
 # Example
 
@@ -142,3 +144,9 @@ begin
 end;
 
 ```
+
+# License and copyright
+
+© 2025 Brian Olsen.
+Licensed under the LGPL License.
+For more information, view the `LICENSE` file.
