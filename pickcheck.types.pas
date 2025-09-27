@@ -92,6 +92,7 @@ type
     // TODO: start to use TLists, because saying array of specialize ... in a property falls apart
     procedure AddFail(fail: TCheckProperty<T>);
     function AllFails: TCheckProperties<T>;
+    function HasFailures: Boolean;
     procedure AddPass(pass: TCheckProperty<T>);
     function AllPasses: TCheckProperties<T>;
     procedure CountClassifications;
@@ -303,6 +304,11 @@ end;
 function TCheckPropertyReport<T>.AllFails: TCheckProperties<T>;
 begin
     Result := fFails;
+end;
+
+function TCheckPropertyReport<T>.HasFailures: Boolean;
+begin
+  Result := (fFails.Count > 0);
 end;
 
 procedure TCheckPropertyReport<T>.AddPass(pass: TCheckProperty<T>);
