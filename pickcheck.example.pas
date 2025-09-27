@@ -50,8 +50,7 @@ begin
   builder := TMyCheckPropertyBuilder.Create;
   builder.Name := 'This tests an array';
   builder.Signatures := [GenNumber<Integer>(1, 2000), GenNumber<Integer>(1, 2000)];
-  prop := TCheckProperty<Integer>.Create;
-  builder.Build(prop);
+  prop := builder.Build;
   WriteLn('OK');
   WriteLn('Name: ', builder.Name);
   WriteLn('OK');

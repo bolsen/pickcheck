@@ -73,7 +73,7 @@ type
   public
     function Predicate(values: array of T): Boolean; virtual;
     function Classify(values: array of T): String; virtual;
-    procedure Build(var built: TCheckProperty<T>);
+    function Build: TCheckProperty<T>;
     property Signatures: TSignatures<T> read fSignatures write fSignatures;
     property Name: String read fName write fName;
   end;
@@ -166,12 +166,13 @@ begin
   Result := '(not classified)';
 end;
 
-procedure TCheckPropertyBuilder<T>.Build(var built: TCheckProperty<T>);
+function TCheckPropertyBuilder<T>.Build: TCheckProperty<T>;
 var
   sigArgs: array of T;
   i: Integer;
 begin
-  with built do
+  Result := TCheckProperty<T>.Create;
+  with Result do
   begin
     SetLength(sigArgs, Length(fSignatures));
       // Make random values from the signature.
@@ -263,8 +264,7 @@ begin
     fReport[i] := TCheckPropertyReport<T>.Create;
     for j := 1 to trials do
     begin
-      built := TCheckProperty<T>.Create;
-      fProperties[i].Build(built);
+      built := fProperties[i].Build;
 
       if built.Verdict then
       begin

@@ -15,6 +15,7 @@
     <Files>
       <Item>
         <Filename Value="pickcheck.pas"/>
+        <HasRegisterProc Value="True"/>
         <UnitName Value="PickCheck"/>
       </Item>
       <Item>
