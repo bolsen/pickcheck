@@ -9,7 +9,7 @@
 7. [ ] Is the generic interface adding value? Every class that generics touches must be generic too only to serve fields that are. The T refers to the basic input type for signatures. You can use `Variant` as a type
 8. [ ] Improve the randomizer
 9. [ ] Serialize reports as test cases
-10. [ ] Fix the Build(built) function to have building happen in Build;
+10. [X] Fix the Build(built) function to have building happen in Build;
 11. [ ] Use TLists instead of arrays to simplify list code
 12. [ ] We don't use Serial values for TCheckProperty
 13. [ ] write more specifiers
